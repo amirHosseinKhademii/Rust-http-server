@@ -1,3 +1,5 @@
+use crate::http::Request;
+use std::convert::TryFrom;
 use std::io::Read;
 use std::net::TcpListener;
 pub struct Server {
@@ -17,7 +19,13 @@ impl Server {
                 Ok((mut stream, _)) => {
                     let mut buffer = [0; 1024];
                     match stream.read(&mut buffer) {
-                        Ok(_) => println!("Request received: {}", String::from_utf8_lossy(&buffer)),
+                        Ok(_) => {
+                            println!("Request received: {}", String::from_utf8_lossy(&buffer));
+                            match Request::try_from(&buffer[..]) {
+                                Ok(request) => {}
+                                Err(e) => println!("Error: {}", e),
+                            }
+                        }
                         Err(e) => println!("Error: {}", e),
                     }
                 }
