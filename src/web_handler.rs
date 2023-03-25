@@ -1,6 +1,6 @@
 use crate::http::{Method, Request, Response, StatusCode};
 use crate::server::Handler;
-use std::fs::read_to_string;
+use std::fs;
 pub struct WebHandler {
     public_path: String,
 }
@@ -11,7 +11,16 @@ impl WebHandler {
     }
     fn read_file(&self, file_path: &str) -> Option<String> {
         let path = format!("{}/{}", self.public_path, file_path);
-        read_to_string(path).ok()
+        match fs::canonicalize(path) {
+            Ok(path) => {
+                if path.starts_with(&self.public_path) {
+                    fs::read_to_string(path).ok()
+                } else {
+                    None
+                }
+            }
+            Err(_) => None,
+        }
     }
 }
 
@@ -23,7 +32,10 @@ impl Handler for WebHandler {
                 "/hello" => {
                     Response::new(StatusCode::OK, Some(self.read_file("hello.html").unwrap()))
                 }
-                _ => Response::new(StatusCode::NotFound, None),
+                path => match self.read_file(path) {
+                    Some(content) => Response::new(StatusCode::OK, Some(content)),
+                    None => Response::new(StatusCode::NotFound, None),
+                },
             },
 
             _ => Response::new(StatusCode::NotFound, None),
