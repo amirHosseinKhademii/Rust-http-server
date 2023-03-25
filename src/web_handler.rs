@@ -1,6 +1,14 @@
 use crate::http::{Method, Request, Response, StatusCode};
 use crate::server::Handler;
-pub struct WebHandler;
+pub struct WebHandler {
+    public_path: String,
+}
+
+impl WebHandler {
+    pub fn new(public_path: String) -> Self {
+        Self { public_path }
+    }
+}
 
 impl Handler for WebHandler {
     fn handle_request(&mut self, request: &Request) -> Response {
